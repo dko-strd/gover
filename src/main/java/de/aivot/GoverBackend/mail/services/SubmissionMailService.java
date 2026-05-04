@@ -5,6 +5,7 @@ import de.aivot.GoverBackend.destination.entities.Destination;
 import de.aivot.GoverBackend.exceptions.InvalidUserEMailException;
 import de.aivot.GoverBackend.exceptions.NoValidUserEMailsInDepartmentException;
 import de.aivot.GoverBackend.form.entities.Form;
+import de.aivot.GoverBackend.form.services.FormDerivationServiceFactory;
 import de.aivot.GoverBackend.lib.exceptions.ResponseException;
 import de.aivot.GoverBackend.mail.enums.MailTemplate;
 import de.aivot.GoverBackend.models.lib.MailAttachmentBytes;
@@ -41,6 +42,7 @@ public class SubmissionMailService {
     private final PdfService pdfService;
     private final PaymentTransactionRepository paymentTransactionService;
     private final PaymentProviderRepository paymentProviderService;
+    private final FormDerivationServiceFactory formDerivationServiceFactory;
 
     @Autowired
     public SubmissionMailService(
@@ -49,14 +51,15 @@ public class SubmissionMailService {
             UserService userService,
             PdfService pdfService,
             PaymentTransactionRepository paymentTransactionService,
-            PaymentProviderRepository paymentProviderService
-    ) {
+            PaymentProviderRepository paymentProviderService,
+            FormDerivationServiceFactory formDerivationServiceFactory) {
         this.mailService = mailService;
         this.submissionStorageService = submissionStorageService;
         this.userService = userService;
         this.pdfService = pdfService;
         this.paymentTransactionService = paymentTransactionService;
         this.paymentProviderService = paymentProviderService;
+        this.formDerivationServiceFactory = formDerivationServiceFactory;
     }
 
     public void sendToDestination(Form form, Submission submission, Destination destination, Collection<SubmissionAttachment> attachments) throws MessagingException, IOException, ResponseException {
@@ -101,7 +104,7 @@ public class SubmissionMailService {
                 paymentProviderService.findById(paymentTransaction.getPaymentProviderKey()).orElse(null) :
                 null;
 
-        var destinationData = DestinationDataFormatter.createDataWithoutFiles(form, submission, paymentTransaction, paymentProvider).format();
+        var destinationData = DestinationDataFormatter.createDataWithoutFiles(formDerivationServiceFactory, form, submission, paymentTransaction, paymentProvider).format();
         var destinationDataBytes = new ObjectMapper().writeValueAsBytes(destinationData);
         attachmentsData.add(new MailAttachmentBytes("Antrag.json", MediaType.APPLICATION_JSON, destinationDataBytes));
 

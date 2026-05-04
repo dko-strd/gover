@@ -3,6 +3,7 @@ package de.aivot.GoverBackend.submission.controllers;
 import de.aivot.GoverBackend.exceptions.ForbiddenException;
 import de.aivot.GoverBackend.exceptions.NotFoundException;
 import de.aivot.GoverBackend.exceptions.UnauthorizedException;
+import de.aivot.GoverBackend.form.services.FormDerivationServiceFactory;
 import de.aivot.GoverBackend.form.services.FormService;
 import de.aivot.GoverBackend.lib.exceptions.ResponseException;
 import de.aivot.GoverBackend.payment.services.PaymentProviderService;
@@ -49,6 +50,7 @@ public class SubmissionAttachmentsController {
     private final SubmissionService submissionService;
     private final PaymentTransactionService paymentTransactionService;
     private final PaymentProviderService paymentProviderService;
+    private final FormDerivationServiceFactory formDerivationServiceFactory;
 
     @Autowired
     public SubmissionAttachmentsController(
@@ -58,7 +60,7 @@ public class SubmissionAttachmentsController {
             SubmissionAttachmentService submissionAttachmentService,
             SubmissionService submissionService,
             FormService formService,
-            PaymentTransactionService paymentTransactionService, PaymentProviderService paymentProviderService) {
+            PaymentTransactionService paymentTransactionService, PaymentProviderService paymentProviderService, FormDerivationServiceFactory formDerivationServiceFactory) {
         this.formService = formService;
         this.submissionWithMembershipService = submissionWithMembershipService;
         this.submissionStorageService = submissionStorageService;
@@ -67,6 +69,7 @@ public class SubmissionAttachmentsController {
         this.submissionService = submissionService;
         this.paymentTransactionService = paymentTransactionService;
         this.paymentProviderService = paymentProviderService;
+        this.formDerivationServiceFactory = formDerivationServiceFactory;
     }
 
     @GetMapping("")
@@ -186,7 +189,7 @@ public class SubmissionAttachmentsController {
         }
 
         var data = DestinationDataFormatter
-                .create(form, submission, paymentTransaction, paymentProvider, pdfBytes, attachmentBytes)
+                .create(formDerivationServiceFactory, form, submission, paymentTransaction, paymentProvider, pdfBytes, attachmentBytes)
                 .format();
 
         return new ResponseEntity<>(data, HttpStatus.OK);
